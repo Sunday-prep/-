@@ -53,6 +53,7 @@ input,textarea{font:inherit;background:var(--card);color:var(--ink);border:1px s
 .seg button.sel{border-color:var(--gold);background:var(--bg)}
 .empty{color:var(--mut);text-align:center;padding:30px 0}
 .cols{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}.col{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:.88rem}.col h3{margin:0 0 6px;font-size:.9rem;line-height:1.4}.col ul{margin:0;padding:0 18px}.col .none{color:var(--mut)}.col small{color:var(--mut)}
+.alb{background:#c62828;color:#fff;border:0;border-radius:10px;padding:6px 16px;font-size:.85rem;font-weight:600;margin-bottom:14px}.alb:hover{background:#a81f1f}
 .hide{display:none!important}
 @media (prefers-reduced-motion:no-preference){.tile,.btn{transition:background .15s,border-color .15s}}
 </style>
@@ -84,7 +85,7 @@ import {getAuth,signInWithEmailAndPassword,onAuthStateChanged,signOut} from "htt
 import {getFirestore,collection,onSnapshot,doc,setDoc,getDoc,deleteDoc} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 // ===== الصق إعدادات Firebase هنا (من Project settings > Your apps) =====
 const firebaseConfig={
-   apiKey: "AIzaSyACKiYfLUaxesjDwawMN-zqcxE26tijluo",
+  apiKey: "AIzaSyACKiYfLUaxesjDwawMN-zqcxE26tijluo",
   authDomain: "our-sons.firebaseapp.com",
   projectId: "our-sons",
   storageBucket: "our-sons.firebasestorage.app",
@@ -131,6 +132,7 @@ const fam=()=>S.families.find(f=>f.id===v.fam);
 
 function pct(f,k){const d=S.att[f.id]||{};const ds=Object.keys(d);if(!ds.length)return null;return Math.round(ds.filter(x=>d[x][k.id]).length/ds.length*100)}
 
+const OA=new Set();
 function alerts(f){
   const c=new Date();c.setDate(c.getDate()-30);const cut=c.getFullYear()+"-"+String(c.getMonth()+1).padStart(2,"0")+"-"+String(c.getDate()).padStart(2,"0");
   const low=f.kids.map(k=>({k,p:pct(f,k)})).filter(x=>x.p!==null&&x.p<50);
@@ -144,7 +146,7 @@ function render(){
   if(v.page==="home"){
     a.innerHTML=`<h2>الأسر</h2><div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(310px,1fr))">${S.families.map(f=>`
       <div class="fam"><div class="tile" style="padding:0"><button class="tile" style="border:0;background:none;min-height:110px" data-open="${f.id}">${esc(f.name)}<small>${f.kids.length} طفل</small></button>
-      <span class="ac"><button class="ic" data-ef="${f.id}" aria-label="تعديل ${esc(f.name)}">✏️</button><button class="ic" data-df="${f.id}" aria-label="حذف ${esc(f.name)}">🗑️</button></span></div>${alerts(f)}</div>`).join("")}
+      <button class="alb" data-al="${f.id}" aria-expanded="${OA.has(f.id)}">${OA.has(f.id)?"إخفاء التنبيهات":"عرض التنبيهات"}</button><span class="ac"><button class="ic" data-ef="${f.id}" aria-label="تعديل ${esc(f.name)}">✏️</button><button class="ic" data-df="${f.id}" aria-label="حذف ${esc(f.name)}">🗑️</button></span></div>${OA.has(f.id)?alerts(f):""}</div>`).join("")}
       <button class="tile add" id="addf">+ إضافة أسرة</button></div>`;
     return;
   }
@@ -208,6 +210,7 @@ function visModal(k){
 $("#app").addEventListener("click",e=>{
   const t=e.target.closest("button");if(!t)return;const d=t.dataset;
   if(d.open){v.fam=d.open;v.page="menu"}
+  else if(d.al){OA.has(d.al)?OA.delete(d.al):OA.add(d.al)}
   else if(d.go){v.page=d.go}
   else if(t.id==="addf"){return nameModal("إضافة أسرة","",n=>S.families.push({id:uid(),name:n,kids:[],order:Date.now()}))}
   else if(d.ef){const f=S.families.find(x=>x.id===d.ef);return nameModal("تعديل اسم الأسرة",f.name,n=>f.name=n)}
